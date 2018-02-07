@@ -13,7 +13,7 @@ public class Sorter extends Thread {
     private static HashMap<String,HashMap<String,Virus>> virusMap = new HashMap<>();
     private String classification, sortBy;
     private String[] findThese;
-    private DefaultListModel<String> model; // Puur alleen zodat viruslogica weet waar de ID's uiteindelijk in moet worden opgeslagen
+    private int lijstnr; // Puur alleen zodat viruslogica weet waar de ID's uiteindelijk in moet worden opgeslagen
 
     /**
      * Constructor die gebruikt wordt om het object te maken met bijbehorende parameters
@@ -21,16 +21,16 @@ public class Sorter extends Thread {
      * @param classification String met de classificatie key voor de juiste HashMap uit de map te halen
      * @param findThese een array met de virussen due gevonden en gesorteerd moeten worden
      * @param sortBy Een String waarin staat waarop gesorteerd moet worden
-     * @param model Model die verwijst naar de lijst waarin de virus gezet moet worden
+     * @param lijstnr Model die verwijst naar de lijst waarin de virus gezet moet worden
      */
     public Sorter(HashMap<String,HashMap<String,Virus>> map,
                   String classification,String[] findThese,
-                  String sortBy, DefaultListModel model){
+                  String sortBy, int lijstnr){
         virusMap = map;
         this.classification = classification;
         this.findThese = findThese;
         this.sortBy = sortBy;
-        this.model = model;
+        this.lijstnr = lijstnr;
     }
 
     @Override
@@ -41,7 +41,7 @@ public class Sorter extends Thread {
         ArrayList<Virus> virusList = vindVirussen();
         ArrayList<Virus> gesorteerd = sorteer(virusList);
         ArrayList<String> idList = extractID(gesorteerd);
-        VirusLogica.showVirusses(idList, model);
+        VirusLogica.showVirusses(idList, lijstnr);
 
     }
 

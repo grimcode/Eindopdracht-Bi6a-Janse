@@ -67,7 +67,7 @@ public class Virus implements Comparable{
         switch (compareOn.toLowerCase()){
 
             case "classification":
-                return this.classification.compareTo(vergelijkMet.classification);
+                return this.classification.toLowerCase().compareTo(vergelijkMet.classification.toLowerCase());
 
             case "id":
                 Integer idThis = Integer.parseInt(this.taxID),

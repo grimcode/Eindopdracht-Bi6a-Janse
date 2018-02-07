@@ -61,6 +61,7 @@ public class VirusInfoScreen extends JFrame {
         infoArea.setText("Information about: "+virus);
         infoArea.append("\nNaam:\t\t"+virus.getName());
         infoArea.append("\nTax ID:\t\t"+virus.getTaxID());
+        infoArea.append("\nClassificatie:\t\t"+virus.getClassification());
         infoArea.append("\nLineage:\t\t"+virus.getLineage());
         infoArea.append("\nRefSeq ID:\t\t");
         for (String id : virus.getRefseqID()){

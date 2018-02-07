@@ -43,6 +43,7 @@ import java.util.HashSet;
 public class VirusGUI extends JFrame implements ActionListener, ItemListener, MouseListener,ListSelectionListener{
 
     private JTextArea emotieArea,statusArea;
+    private JLabel aantalVirussen1, aantalVirussen2;
     private JTextField bestandInput;
     private JComboBox<String> classificationBox, host1Box, host2Box;
     private JButton chooseBestandButton, onlineBestandButton,openURLButton;
@@ -53,8 +54,6 @@ public class VirusGUI extends JFrame implements ActionListener, ItemListener, Mo
     private Color fontColor = Color.cyan, backgroundColor = Color.black, sortFontColor = Color.yellow;
     private String defaultURLMessage = "Voer hier uw URL in...";
     private JList<String> virus1List, virus2List, intersectList;
-    private DefaultListModel<String> model1, model2, modelIntersect;
-
 
     /**
      * Roept de functies en methodes aan om de applicatie op te starten.
@@ -222,6 +221,7 @@ public class VirusGUI extends JFrame implements ActionListener, ItemListener, Mo
         classificationBox.setEnabled(false);
         optionPanel.add(classificationBox);
 
+
         // Ruimte om voor 1 gastheer de virussen op te halen
         JPanel host1Panel =  new JPanel();
         host1Panel.setPreferredSize(new Dimension(panelWidth/3-5,260));
@@ -247,9 +247,14 @@ public class VirusGUI extends JFrame implements ActionListener, ItemListener, Mo
         virus1Label.setFont(subTitlesFont);
         virus1Label.setForeground(fontColor);
         host1Panel.add(virus1Label);
+        
+        aantalVirussen1 = new JLabel();
+        aantalVirussen1.setBackground(backgroundColor);
+        aantalVirussen1.setFont(subTitlesFont);
+        aantalVirussen1.setForeground(fontColor);
+        host1Panel.add(aantalVirussen1);
 
-        model1 = new DefaultListModel<>();                                                      // DefaulListModel zorgt ervoor dat ik de lijst kan aanvullen en aanpassen
-        virus1List = new JList<>(model1);
+        virus1List = new JList<>();
         virus1List.setFont(new Font("Courier new",Font.BOLD,15));
         virus1List.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);                       // Zorgt ervoor dat er maar één onderdeel kan worden geselecteerd
         virus1List.addListSelectionListener(this);                                              // Zorgt ervoor dat er een event ontstaat als er een onderdeel van de lijst wordt aangeklikt
@@ -268,8 +273,7 @@ public class VirusGUI extends JFrame implements ActionListener, ItemListener, Mo
                 TitledBorder.TOP,new Font("Ariel",Font.BOLD,18),Color.white));
         window.add(intersectPanel);
 
-        modelIntersect = new DefaultListModel<>();
-        intersectList = new JList<>(modelIntersect);
+        intersectList = new JList<>();
         intersectList.setFont(new Font("Courier new",Font.BOLD,15));
         intersectList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         intersectList.addListSelectionListener(this);
@@ -306,8 +310,13 @@ public class VirusGUI extends JFrame implements ActionListener, ItemListener, Mo
         virus2Label.setForeground(fontColor);
         host2Panel.add(virus2Label);
 
-        model2 = new DefaultListModel<>();
-        virus2List = new JList<>(model2);
+        aantalVirussen2 = new JLabel();
+        aantalVirussen2.setBackground(backgroundColor);
+        aantalVirussen2.setFont(subTitlesFont);
+        aantalVirussen2.setForeground(fontColor);
+        host2Panel.add(aantalVirussen2);
+
+        virus2List = new JList<>();
         virus2List.setFont(new Font("Courier new",Font.BOLD,15));
         virus2List.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         virus2List.addListSelectionListener(this);
@@ -321,6 +330,7 @@ public class VirusGUI extends JFrame implements ActionListener, ItemListener, Mo
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
         this.setLocation(dim.width/2-this.getSize().width/2, dim.height/2-this.getSize().height/2);
 
+        VirusLogica.setVirusgui(this);
     }
 
     /**
@@ -330,24 +340,24 @@ public class VirusGUI extends JFrame implements ActionListener, ItemListener, Mo
     @Override
     public void actionPerformed(ActionEvent event){
         if(event.getSource() == chooseBestandButton){
-            fileExceptionCatcher(-1);                               // Zorgt ervoor dat de bestandsknopen uitgeschakeld worden en de gebruiker weet dat het programma bezig is
-            VirusLogica.openLokaalBestand(this);
+            VirusLogica.fileExceptionThrower(-1);                               // Zorgt ervoor dat de bestandsknopen uitgeschakeld worden en de gebruiker weet dat het programma bezig is
+            VirusLogica.openLokaalBestand();
         } else if (event.getSource() == onlineBestandButton){
-            fileExceptionCatcher(-1);
-            VirusLogica.openOnlineBestand(this, "ftp://ftp.genome.jp/pub/db/virushostdb/virushostdb.tsv");
+            VirusLogica.fileExceptionThrower(-1);
+            VirusLogica.openOnlineBestand("ftp://ftp.genome.jp/pub/db/virushostdb/virushostdb.tsv");
         } else if(event.getSource() == openURLButton){
             String website = bestandInput.getText();
             if (!website.equals(defaultURLMessage)) {
-                fileExceptionCatcher(-1);
-                VirusLogica.openOnlineBestand(this, website);
+                VirusLogica.fileExceptionThrower(-1);
+                VirusLogica.openOnlineBestand(website);
             }
         }else if(classificationBox.getItemCount() !=0 &&
                 host1Box.getItemCount() != 0 &&
                 host2Box.getItemCount() != 0){                              //Hierdoor hoef ik niet telkens de status verandering per event te aan te roepen
             Emotie.getLoading(emotieArea, statusArea);
             if(event.getSource() == classificationBox || event.getSource() == host1Box || event.getSource() == host2Box){
-                VirusLogica.getVirusses((String) host1Box.getSelectedItem(), model1);
-                VirusLogica.getVirusses((String) host2Box.getSelectedItem(), model2);
+                VirusLogica.getVirusses((String) host1Box.getSelectedItem(), 1);
+                VirusLogica.getVirusses((String) host2Box.getSelectedItem(), 2);
             }
             statusArea.append("\n###############\n");
             statusArea.append("De virussen zijn gevonden en onderaan weergegeven!");
@@ -361,14 +371,16 @@ public class VirusGUI extends JFrame implements ActionListener, ItemListener, Mo
      */
     @Override
     public void itemStateChanged(ItemEvent event){
-        if(model1.size() > 0
-          || model2.size() > 0){
-            Emotie.getLoading(emotieArea,statusArea);
-            VirusLogica.getVirusses((String) host1Box.getSelectedItem(), model1);
-            VirusLogica.getVirusses((String) host2Box.getSelectedItem(), model2);
-            statusArea.append("\n###############\n");
-            statusArea.append("De virussen zijn gesorteerd en onderaan weergegeven!");
-            Emotie.getGelukt(emotieArea, statusArea);
+        if(VirusLogica.getVirus1inhoud().size() > 0
+          || VirusLogica.getVirus2inhoud().size() > 0){
+            if(event.getStateChange() == ItemEvent.SELECTED) {
+                Emotie.getLoading(emotieArea, statusArea);
+                VirusLogica.getVirusses((String) host1Box.getSelectedItem(), 1);
+                VirusLogica.getVirusses((String) host2Box.getSelectedItem(), 2);
+                statusArea.append("\n###############\n");
+                statusArea.append("De virussen zijn gesorteerd en onderaan weergegeven!");
+                Emotie.getGelukt(emotieArea, statusArea);
+            }
         }
     }
 
@@ -392,98 +404,6 @@ public class VirusGUI extends JFrame implements ActionListener, ItemListener, Mo
         }
     }
 
-    /**
-     * Aangezien het niet mogelijk is om exceptions tijdens het runnen van threads
-     * optegooien is deze methode gemaakt om dat toch een gelijke effect te creeëren.
-     * Ook zorgt de methode voor het uit- en aanzetten van de bestandknoppen.
-     * @param functie Een integer waarmee de methode weet welke exception die moet regeren
-     */
-    public void fileExceptionCatcher(int functie) {
-        switch (functie) {
-            case -1:
-                // Bestand knoppen tijdelijk uitschakelen om te voorkomen dat het programma overbelast wordt als de gebruiker blijft uploaden
-                openURLButton.setEnabled(false);
-                chooseBestandButton.setEnabled(false);
-                onlineBestandButton.setEnabled(false);
-                Emotie.getLoading(emotieArea, statusArea); // melden dat het programma bezig is
-                break;
-
-            case 0:
-                // Melden dat het is gelukt
-                statusArea.append("\n###############\n");
-                statusArea.append("Het bestand is geladen en verwerkt!");
-                Emotie.getGelukt(emotieArea, statusArea);
-                break;
-
-            case 1:
-                // NoFileInObject exception is opgetreden in de Bestand thread. Treed alleen op als filechooser geannuleerd is.
-                statusArea.append("\n###############\n");
-                statusArea.append("Lokale bestand kiezen is geannuleerd.");
-                Emotie.getGelukt(emotieArea, statusArea);
-                break;
-
-            case 2:
-                // WrongDocumentException is opgetreden bij het controleren van de inhoud
-                statusArea.append("\n###############\n");
-                statusArea.append("Error: Er is iets mis met uw opgegeven bestand."+
-                        " Controleer uw URL of bestandsindeling en "+
-                        "vergelijk deze met het online bestand op "+
-                        "ftp://ftp.genome.jp/pub/db/virushostdb/virushostdb.tsv");
-                Emotie.getError(emotieArea, statusArea);
-                break;
-
-            case 3:
-                // IOException is opgetreden tijdens het openen of lezen van het bestand
-                statusArea.append("\n###############\n");
-                statusArea.append("Error: Uw bestand kan niet geopend of gelezen worden. " +
-                        "Controleer uw opgegeven URL en probeer het nog eens.");
-                Emotie.getError(emotieArea, statusArea);
-
-            default:
-                break;
-        }
-        if (functie != -1) {
-            // Altijd weer knoppen vrijgeven tenzij de methode is aangeroepen om ze uit te doen
-            chooseBestandButton.setEnabled(true);
-            onlineBestandButton.setEnabled(true);
-            openURLButton.setEnabled(true);
-        }
-
-    }
-
-    /**
-     * Functie om de de combobox van classificaties in te vullen vanuit de VirusLogica class.
-     * Aangezien dit een visuele functie is staat het in de GUI class i.p.v. de logica class.
-     * @param lijst Een HashSet met de classificaties
-     */
-    public void fillClassificationBox(HashSet<String> lijst){
-        statusArea.append("\n###############\n");
-        statusArea.append("Classificatie Lijst is geupdated!\nKies een classificatie om uw gewenste virus groep te zien.");
-        Emotie.getGelukt(emotieArea,statusArea);
-
-        lijst.add("Alles");
-        String[] sorteerdeLijst = lijst.toArray(new String[lijst.size()]);
-        Arrays.sort(sorteerdeLijst);
-        for(String classOnderdeel : sorteerdeLijst){
-            classificationBox.addItem(classOnderdeel);
-        }
-        classificationBox.setSelectedIndex(0);
-        classificationBox.setEnabled(true);
-    }
-
-    /**
-     * Zorgt er voor dat de comboboxen van de gastheren gevuld kunnen worden.
-     * @param hostLijst Een String[] die de gastheer namen en ID'S BEVAT
-     */
-    public void fillHostBoxes(String[] hostLijst){
-        Arrays.sort(hostLijst);
-        for(String host : hostLijst){
-            host1Box.addItem(host);
-            host2Box.addItem(host);
-        }
-        host1Box.setEnabled(true);
-        host2Box.setEnabled(true);
-    }
 
     /**
      * Deze methode zorgt ervoor dat de huidige geselecteerde radiobutton kan worden opgehaald
@@ -500,13 +420,23 @@ public class VirusGUI extends JFrame implements ActionListener, ItemListener, Mo
         return null;                                                            // Hoewel er altijd een radio knop geselecteerd is, is deze meer om foutmeldingen te voorkomen
     }
 
-    public String getClassification(){
-        return (String)classificationBox.getSelectedItem();
-    }
+    public String getClassification(){return (String)classificationBox.getSelectedItem();}
+    public JTextArea getEmotieArea() {return emotieArea;}
+    public JTextArea getStatusArea() {return statusArea;}
+    public JButton getOpenURLButton() {return openURLButton;}
+    public JButton getChooseBestandButton() {return chooseBestandButton;}
+    public JButton getOnlineBestandButton() {return onlineBestandButton;}
 
-    public DefaultListModel<String> getModel1(){return model1;}
-    public DefaultListModel<String> getModel2() { return model2; }
-    public DefaultListModel<String> getModelIntersect() { return modelIntersect;}
+    public JList<String> getVirus1List(){ return virus1List;}
+    public JList<String> getVirus2List() {return virus2List;}
+    public JList<String> getIntersectList() {return intersectList;}
+
+    public JComboBox<String> getHost1Box() {return host1Box;}
+    public JComboBox<String> getHost2Box() {return host2Box;}
+    public JComboBox<String> getClassificationBox() {return classificationBox;}
+
+    public JLabel getAantalVirussen1() {return aantalVirussen1;}
+    public JLabel getAantalVirussen2() {return aantalVirussen2;}
 
     /**
      * Functie om de default text van de url invoerveld te verwijderen en de font aan te passen
@@ -524,4 +454,5 @@ public class VirusGUI extends JFrame implements ActionListener, ItemListener, Mo
     public void mouseExited(MouseEvent e){}
     public void mouseEntered(MouseEvent e){}
     public void mousePressed(MouseEvent e){}
+
 }
